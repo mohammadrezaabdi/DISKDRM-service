@@ -1,27 +1,24 @@
+using System.Management;
 namespace SSDDRM_service;
 
 public static class Disk
 {
     public static string ListDisks()
     {
-        string listDisk = "";
-
-        foreach (var drive in DriveInfo.GetDrives())
+        string list = "";
+        ManagementClass driveClass = new ManagementClass("Win32_DiskDrive");
+        ManagementObjectCollection drives = driveClass.GetInstances();
+        foreach (ManagementObject drive in drives)
         {
-            if (!drive.IsReady){
-                continue;
-            }
-            double freeSpace = drive.TotalFreeSpace;
-            double totalSpace = drive.TotalSize;
-            double percentFree = (freeSpace / totalSpace) * 100;
-            float num = (float)percentFree;
-
-            listDisk += String.Format("Drive:{0} With {1} % free\n", drive.Name, num);
-            listDisk += String.Format("Space Remaining:{0}\n", drive.AvailableFreeSpace);
-            listDisk += String.Format("Percent Free Space:{0}\n", percentFree);
-            listDisk += String.Format("Space used:{0}\n", drive.TotalSize);
-            listDisk += String.Format("Type: {0}\n", drive.DriveType);
+            list += String.Format("Name: {0}\n", drive["Caption"]);
+            list += String.Format("SerialNumber: {0}\n", drive["SerialNumber"]);
+            list += String.Format("Size: {0} bytes\n", drive["Size"]);
+            // foreach (PropertyData property in drive.Properties)
+            // {
+            //     list += String.Format("Property: {0}, Value: {1}\n", property.Name, property.Value);
+            // }
+            list += "\n";
         }
-        return listDisk;
+        return list;
     }
 }
