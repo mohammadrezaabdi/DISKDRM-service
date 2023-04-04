@@ -1,4 +1,5 @@
 namespace SSDDRM_service;
+using static Disk;
 
 public class Worker : BackgroundService
 {
@@ -14,6 +15,7 @@ public class Worker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("List Disks:\n" + ListDisks());
             await Task.Delay(10000, stoppingToken);
         }
     }
