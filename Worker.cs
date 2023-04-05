@@ -16,6 +16,9 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             _logger.LogInformation("List Disks:\n" + ListDisks());
+            //example of removing device
+            USBEject de = new USBEject("E:");
+            de.Eject();
             await Task.Delay(10000, stoppingToken);
         }
     }
