@@ -1,7 +1,9 @@
 namespace SSDDRM_service;
 using System.Runtime.InteropServices;
+using System.Text;
 
 //TODO: Add compatibility for other connectors: PCIE, SATA, SCSI, ....
+//TODO: use library class in https://github.com/dotnet/pinvoke
 public class USBEject
 {
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -39,20 +41,33 @@ public class USBEject
         IntPtr lpOverlapped
     );
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    static extern bool GetVolumeNameForVolumeMountPoint(
+        string lpszVolumeMountPoint,
+        [Out] StringBuilder lpszVolumeName,
+        uint cchBufferLength
+    );
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern bool DeleteVolumeMountPoint(string lpszVolumeMountPoint);
+
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr hObject);
 
     private IntPtr handle = IntPtr.Zero;
+    private string drivePath;
+    private const int MAX_PATH = 260;
 
     const uint GENERIC_READ = 0x80000000;
     const uint GENERIC_WRITE = 0x40000000;
-    const int FILE_SHARE_READ = 0x1;
-    const int FILE_SHARE_WRITE = 0x2;
-    const int FSCTL_LOCK_VOLUME = 0x00090018;
-    const int FSCTL_DISMOUNT_VOLUME = 0x00090020;
-    const int IOCTL_STORAGE_EJECT_MEDIA = 0x2D4808;
-    const int IOCTL_STORAGE_MEDIA_REMOVAL = 0x002D4804;
+    const uint FILE_SHARE_READ = 0x1;
+    const uint FILE_SHARE_WRITE = 0x2;
+    const uint FSCTL_LOCK_VOLUME = 0x00090018;
+    const uint FSCTL_DISMOUNT_VOLUME = 0x00090020;
+    const uint IOCTL_STORAGE_EJECT_MEDIA = 0x2D4808;
+    const uint IOCTL_STORAGE_MEDIA_REMOVAL = 0x002D4804;
+    const uint IOCTL_MOUNTMGR_DELETE_POINTS = 0x6dc004; //TODO: remove letter with DeviceIoControl
 
     /// <summary>
     /// Constructor for the USBEject class
@@ -61,6 +76,7 @@ public class USBEject
 
     public USBEject(string driveLetter)
     {
+        drivePath = @"" + driveLetter[0] + ":\\";
         string filename = @"\\.\" + driveLetter[0] + ":";
         handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
     }
@@ -75,6 +91,8 @@ public class USBEject
             result = AutoEjectVolume();
         }
         CloseVolume();
+        //TODO: Do not Call for Removable Devices because of permenant letter removal
+        SafeRemoveVolume();
         return result;
     }
 
@@ -117,5 +135,11 @@ public class USBEject
     private bool CloseVolume()
     {
         return CloseHandle(handle);
+    }
+
+    private bool SafeRemoveVolume()
+    {
+        StringBuilder volume = new StringBuilder(MAX_PATH);
+        return GetVolumeNameForVolumeMountPoint(drivePath, volume, (uint)MAX_PATH) ? DeleteVolumeMountPoint(drivePath) : false;
     }
 }
