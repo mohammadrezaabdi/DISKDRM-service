@@ -2,9 +2,8 @@ namespace SSDDRM_service;
 using System.Runtime.InteropServices;
 using System.Text;
 
-//TODO: Add compatibility for other connectors: PCIE, SATA, SCSI, ....
 //TODO: use library class in https://github.com/dotnet/pinvoke
-public class USBEject
+public class DiskEject
 {
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
     private static extern IntPtr CreateFile(
@@ -67,32 +66,27 @@ public class USBEject
     const uint FSCTL_DISMOUNT_VOLUME = 0x00090020;
     const uint IOCTL_STORAGE_EJECT_MEDIA = 0x2D4808;
     const uint IOCTL_STORAGE_MEDIA_REMOVAL = 0x002D4804;
-    const uint IOCTL_MOUNTMGR_DELETE_POINTS = 0x6dc004; //TODO: remove letter with DeviceIoControl
+    const uint IOCTL_MOUNTMGR_DELETE_POINTS = 0x6dc004;
 
-    /// <summary>
-    /// Constructor for the USBEject class
-    /// </summary>
-    /// <param name="driveLetter">This should be the drive letter. Format: F:/, C:/..</param>
-
-    public USBEject(string driveLetter)
+    public DiskEject(char driveLetter)
     {
-        drivePath = @"" + driveLetter[0] + ":\\";
-        string filename = @"\\.\" + driveLetter[0] + ":";
+        drivePath = @"" + driveLetter + ":\\";
+        string filename = @"\\.\" + driveLetter + ":";
         handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
     }
 
-    public bool Eject()
+    public bool Dismount()
     {
+        //TODO: Check if Drive Letter is present
         bool result = false;
-
         if (LockVolume() && DismountVolume())
         {
             PreventRemovalOfVolume(false);
             result = AutoEjectVolume();
         }
         CloseVolume();
-        //TODO: Do not Call for Removable Devices because of permenant letter removal
-        SafeRemoveVolume();
+        if (!result)
+            result = SafeRemoveVolume();
         return result;
     }
 
@@ -137,6 +131,7 @@ public class USBEject
         return CloseHandle(handle);
     }
 
+    //TODO: remove letter with IOCTL_MOUNTMGR_DELETE_POINTS
     private bool SafeRemoveVolume()
     {
         StringBuilder volume = new StringBuilder(MAX_PATH);

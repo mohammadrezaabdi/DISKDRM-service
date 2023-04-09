@@ -4,6 +4,7 @@ using static Disk;
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
+    private const int RUN_INTERVAL = 10000; 
 
     public Worker(ILogger<Worker> logger)
     {
@@ -17,9 +18,9 @@ public class Worker : BackgroundService
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             _logger.LogInformation("List Disks:\n" + ListDisks());
             //example of removing device
-            USBEject de = new USBEject("E:");
-            de.Eject();
-            await Task.Delay(10000, stoppingToken);
+            DiskEject de = new DiskEject('E');
+            de.Dismount();
+            await Task.Delay(RUN_INTERVAL, stoppingToken);
         }
     }
 
