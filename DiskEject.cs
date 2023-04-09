@@ -1,6 +1,7 @@
 namespace SSDDRM_service;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.IO;
 
 //TODO: use library class in https://github.com/dotnet/pinvoke
 public class DiskEject
@@ -71,14 +72,23 @@ public class DiskEject
     public DiskEject(char driveLetter)
     {
         drivePath = @"" + driveLetter + ":\\";
+        if (!Directory.Exists(drivePath))
+        {
+            Console.WriteLine($"Drive letter {drivePath} does not exist!");
+            handle = IntPtr.MinValue;
+            return;
+        }
         string filename = @"\\.\" + driveLetter + ":";
         handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
     }
 
     public bool Dismount()
     {
-        //TODO: Check if Drive Letter is present
         bool result = false;
+        if (handle == IntPtr.MinValue)
+        {
+            return result;
+        }
         if (LockVolume() && DismountVolume())
         {
             PreventRemovalOfVolume(false);
