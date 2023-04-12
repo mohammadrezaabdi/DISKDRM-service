@@ -1,32 +1,54 @@
 namespace SSDDRM_service;
 using System.Management;
+using System.Security.Cryptography;
+using System.Text;
 
-public static class Disk
+public class Disk
 {
-    public static string ListDisks()
+    private string? name;
+    private string? serialNumber;
+    private string? size;
+    private List<string> mountVloume;
+    private byte[] hashValue;
+
+    public Disk(string? name, string? serialNumber, string? size)
     {
-        string list = "";
+        this.name = name;
+        this.serialNumber = serialNumber;
+        this.size = size;
+        this.mountVloume = new List<string>();
+        this.hashValue = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(name + serialNumber));
+    }
+
+    public static List<Disk> GetListDisks()
+    {
+        List<Disk> listDisk = new List<Disk>();
         ManagementClass driveClass = new ManagementClass("Win32_DiskDrive");
         ManagementObjectCollection drives = driveClass.GetInstances();
         foreach (ManagementObject drive in drives)
         {
-            list += String.Format("Name: {0}\n", drive["Caption"]);
-            list += String.Format("Serial: {0}\n", drive["SerialNumber"]);
-            list += String.Format("Size: {0} bytes\n", drive["Size"]);
-            // foreach (PropertyData property in drive.Properties)
-            // {
-            //     list += String.Format("Property: {0}, Value: {1}\n", property.Name, property.Value);
-            // }
-            //TODO: check hash in database & eject if needed
+            Disk disk = new Disk(drive.GetPropertyValue("Caption").ToString(), drive.GetPropertyValue("SerialNumber").ToString(), drive.GetPropertyValue("Size").ToString());
             foreach (ManagementObject diskPartition in drive.GetRelated("Win32_DiskPartition"))
             {
-                foreach (var disk in diskPartition.GetRelated("Win32_LogicalDisk"))
+                foreach (var diskPart in diskPartition.GetRelated("Win32_LogicalDisk"))
                 {
-                    list += String.Format(disk.Properties["Name"].Value.ToString() + "\n");
+                    disk.mountVloume.Add(diskPart.GetPropertyValue("Name").ToString());
                 }
             }
-            list += "\n";
+            listDisk.Add(disk);
         }
-        return list;
+        return listDisk;
+    }
+
+    override public string ToString()
+    {
+        string str = String.Format("Name: {0}, Serial: {1}, Size: {2} bytes", this.name, this.serialNumber, this.size, this.mountVloume);
+        var volumestr = new System.Text.StringBuilder().AppendJoin(" | ", this.mountVloume);
+        var hashstr = new System.Text.StringBuilder();
+        foreach (byte theByte in this.hashValue)
+        {
+            hashstr.Append(theByte.ToString("x2"));
+        }
+        return String.Format("{0}, Volume: {1}, Hash: {2}", str, volumestr.ToString(), hashstr.ToString());
     }
 }
