@@ -78,6 +78,12 @@ public class DiskEject
             handle = IntPtr.MinValue;
             return;
         }
+        if (drivePath.Equals(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))))
+        {
+            Console.WriteLine($"Drive letter {drivePath} cannot be ejected!");
+            handle = IntPtr.MinValue;
+            return;
+        }
         string filename = @"\\.\" + driveLetter + ":";
         handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
     }
