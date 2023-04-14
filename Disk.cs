@@ -32,7 +32,7 @@ public class Disk
             {
                 foreach (var diskPart in diskPartition.GetRelated("Win32_LogicalDisk"))
                 {
-                    disk.mountedVloumes.Add(diskPart.GetPropertyValue("Name").ToString());
+                    disk.mountedVloumes.Add(diskPart.GetPropertyValue("Name")?.ToString() ?? "");
                 }
             }
             listDisk.Add(disk);

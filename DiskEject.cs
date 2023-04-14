@@ -4,7 +4,8 @@ using System.Text;
 using System.IO;
 
 //TODO: use library class in https://github.com/dotnet/pinvoke
-public class DiskEject
+//TODO: handle exceptions
+public static class DiskEject
 {
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
     private static extern IntPtr CreateFile(
@@ -54,9 +55,6 @@ public class DiskEject
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr hObject);
-
-    private IntPtr handle = IntPtr.Zero;
-    private string drivePath;
     private const int MAX_PATH = 260;
 
     const uint GENERIC_READ = 0x80000000;
@@ -69,44 +67,35 @@ public class DiskEject
     const uint IOCTL_STORAGE_MEDIA_REMOVAL = 0x002D4804;
     const uint IOCTL_MOUNTMGR_DELETE_POINTS = 0x6dc004;
 
-    public DiskEject(char driveLetter)
+    public static bool Dismount(string driveName)
     {
-        drivePath = @"" + driveLetter + ":\\";
+        string drivePath = @"" + driveName.Split(":")[0] + ":\\";
+        bool result = false;
         if (!Directory.Exists(drivePath))
         {
             Console.WriteLine($"Drive letter {drivePath} does not exist!");
-            handle = IntPtr.MinValue;
-            return;
+            return result;
         }
         if (drivePath.Equals(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))))
         {
             Console.WriteLine($"Drive letter {drivePath} cannot be ejected!");
-            handle = IntPtr.MinValue;
-            return;
-        }
-        string filename = @"\\.\" + driveLetter + ":";
-        handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
-    }
-
-    public bool Dismount()
-    {
-        bool result = false;
-        if (handle == IntPtr.MinValue)
-        {
             return result;
         }
-        if (LockVolume() && DismountVolume())
+
+        string filename = @"\\.\" + driveName.Split(":")[0] + ":";
+        IntPtr handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+        if (LockVolume(handle) && DismountVolume(handle))
         {
-            PreventRemovalOfVolume(false);
-            result = AutoEjectVolume();
+            PreventRemovalOfVolume(handle, false);
+            result = AutoEjectVolume(handle);
         }
-        CloseVolume();
+        CloseVolume(handle);
         if (!result)
-            result = SafeRemoveVolume();
+            result = SafeRemoveVolume(drivePath);
         return result;
     }
 
-    private bool LockVolume()
+    private static bool LockVolume(IntPtr handle)
     {
         uint byteReturned;
 
@@ -121,7 +110,7 @@ public class DiskEject
         return false;
     }
 
-    private bool PreventRemovalOfVolume(bool prevent)
+    private static bool PreventRemovalOfVolume(IntPtr handle, bool prevent)
     {
         byte[] buf = new byte[1];
         uint retVal;
@@ -130,25 +119,25 @@ public class DiskEject
         return DeviceIoControl(handle, IOCTL_STORAGE_MEDIA_REMOVAL, buf, 1, IntPtr.Zero, 0, out retVal, IntPtr.Zero);
     }
 
-    private bool DismountVolume()
+    private static bool DismountVolume(IntPtr handle)
     {
         uint byteReturned;
         return DeviceIoControl(handle, FSCTL_DISMOUNT_VOLUME, IntPtr.Zero, 0, IntPtr.Zero, 0, out byteReturned, IntPtr.Zero);
     }
 
-    private bool AutoEjectVolume()
+    private static bool AutoEjectVolume(IntPtr handle)
     {
         uint byteReturned;
         return DeviceIoControl(handle, IOCTL_STORAGE_EJECT_MEDIA, IntPtr.Zero, 0, IntPtr.Zero, 0, out byteReturned, IntPtr.Zero);
     }
 
-    private bool CloseVolume()
+    private static bool CloseVolume(IntPtr handle)
     {
         return CloseHandle(handle);
     }
 
     //TODO: remove letter with IOCTL_MOUNTMGR_DELETE_POINTS
-    private bool SafeRemoveVolume()
+    private static bool SafeRemoveVolume(string drivePath)
     {
         StringBuilder volume = new StringBuilder(MAX_PATH);
         return GetVolumeNameForVolumeMountPoint(drivePath, volume, (uint)MAX_PATH) ? DeleteVolumeMountPoint(drivePath) : false;

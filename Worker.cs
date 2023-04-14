@@ -1,7 +1,7 @@
 namespace SSDDRM_service;
 using static Disk;
 using System;
-using System.IO;
+using static DiskEject;
 
 public class Worker : BackgroundService
 {
@@ -41,7 +41,7 @@ public class Worker : BackgroundService
         List<Disk> listDisk = GetListDisks();
         Database db = new Database(DATABASE_PATH);
 
-        //for filling database file
+        //DEBUG: for filling database file
         // int i = 1;
         // foreach (Disk disk in listDisk)
         // {
@@ -61,8 +61,10 @@ public class Worker : BackgroundService
             {
                 foreach (string mountVloume in disk.mountedVloumes)
                 {
-                    DiskEject de = new DiskEject(mountVloume[0]);
-                    de.Dismount();
+                    if (Dismount(mountVloume))
+                    {
+                        _logger.LogInformation("drive {mountVolume} dismounted successfully.", mountVloume);
+                    }
                 }
             }
         }
