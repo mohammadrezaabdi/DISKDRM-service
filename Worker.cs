@@ -1,7 +1,7 @@
 namespace SSDDRM_service;
 using static Disk;
 using System;
-using static DiskEject;
+using System.Text;
 
 public class Worker : BackgroundService
 {
@@ -59,13 +59,8 @@ public class Worker : BackgroundService
             _logger.LogInformation(disk.ToString());
             if (!db.Contains(disk.hashValue))
             {
-                foreach (string mountVloume in disk.mountedVloumes)
-                {
-                    if (Dismount(mountVloume))
-                    {
-                        _logger.LogInformation("drive {mountVolume} dismounted successfully.", mountVloume);
-                    }
-                }
+                List<string> dismountedVolumes = disk.Dismount();
+                _logger.LogInformation("volumes [{mountVolume}] dismounted successfully.", new StringBuilder().AppendJoin(", ", dismountedVolumes));
             }
         }
     }

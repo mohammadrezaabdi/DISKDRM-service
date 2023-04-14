@@ -3,6 +3,7 @@ using System.Management;
 using System.Security.Cryptography;
 using System.Text;
 
+//TODO: handle exceptions
 public class Disk
 {
     private string name;
@@ -43,12 +44,25 @@ public class Disk
     override public string ToString()
     {
         string str = String.Format("Name: {0}, Serial: {1}, Size: {2} bytes", this.name, this.serialNumber, this.size, this.mountedVloumes);
-        var volumestr = new System.Text.StringBuilder().AppendJoin(" | ", this.mountedVloumes);
-        var hashstr = new System.Text.StringBuilder();
+        var volumestr = new StringBuilder().AppendJoin(" | ", this.mountedVloumes);
+        var hashstr = new StringBuilder();
         foreach (byte theByte in this.hashValue)
         {
             hashstr.Append(theByte.ToString("x2"));
         }
         return String.Format("{0}, Volume: {1}, Hash: {2}", str, volumestr.ToString(), hashstr.ToString());
+    }
+
+    public List<string> Dismount()
+    {
+        List<string> dismountedVolums = new List<string>();
+        foreach (string mountVloume in mountedVloumes)
+        {
+            if (DiskEject.Dismount(mountVloume))
+            {
+                dismountedVolums.Add(mountVloume);
+            }
+        }
+        return dismountedVolums;
     }
 }

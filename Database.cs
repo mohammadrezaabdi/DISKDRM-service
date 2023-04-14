@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 namespace SSDDRM_service;
 using System.IO;
 
+//TODO: handle exceptions
 public class Database
 {
 
