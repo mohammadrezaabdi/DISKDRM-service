@@ -2,12 +2,10 @@ namespace SSDDRM_service;
 using static Disk;
 using System;
 using System.Text;
-
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private const int RUN_INTERVAL = 10000;
-    private const string DATABASE_PATH = @"./db.bin";
 
     public Worker(ILogger<Worker> logger)
     {
@@ -39,7 +37,7 @@ public class Worker : BackgroundService
     public void DismountUnAuthorizedDisks()
     {
         List<Disk> listDisk = GetListDisks();
-        Database db = new Database(DATABASE_PATH);
+        Database db = new Database();
 
         //DEBUG: for filling database file
         // int i = 1;

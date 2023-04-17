@@ -136,7 +136,8 @@ public static class DiskEject
         return CloseHandle(handle);
     }
 
-    //TODO: remove letter with IOCTL_MOUNTMGR_DELETE_POINTS
+    //TODO: offline device using IOCTL_DISK_SET_DISK_ATTRIBUTES ???
+    //              https://stackoverflow.com/questions/7531771/take-disks-online-offline
     private static bool SafeRemoveVolume(string drivePath)
     {
         StringBuilder volume = new StringBuilder(MAX_PATH);

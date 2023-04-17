@@ -10,10 +10,11 @@ public class Database
     static extern int memcmp(byte[] b1, byte[] b2, long count);
     public List<byte[]> db { get; private set; }
     public static int ENTITY_SIZE = 32;
+    private string DATABASE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SSDDRM", "db.bin");
 
-    public Database(string database_path)
+    public Database()
     {
-        byte[] stream = File.ReadAllBytes(database_path);
+        byte[] stream = File.ReadAllBytes(DATABASE_PATH);
         if (stream.Length % ENTITY_SIZE != 0)
         {
             throw new FileLoadException("Database file is corrupted!!!");

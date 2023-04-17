@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-SSDDRM_service-2bc48a73-9678-4803-aa0e-e1cea16dc207</UserSecretsId>
     <RootNamespace>SSDDRM_service</RootNamespace>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
