@@ -1,4 +1,6 @@
 namespace SSDDRM_service;
+
+using System.ComponentModel;
 using System.Management;
 using System.Security.Cryptography;
 using System.Text;
@@ -58,9 +60,19 @@ public class Disk
         List<string> dismountedVolums = new List<string>();
         foreach (string mountVloume in mountedVloumes)
         {
-            if (DiskEject.Dismount(mountVloume))
+            try
             {
-                dismountedVolums.Add(mountVloume);
+                if (DiskEject.Dismount(mountVloume))
+                {
+                    dismountedVolums.Add(mountVloume);
+                }
+            }
+            catch (Win32Exception e)
+            {
+                if (e.Message.Equals(DiskEject.VOLUME_IS_WIN_PRIMARY))
+                {
+                    break;
+                }
             }
         }
         return dismountedVolums;

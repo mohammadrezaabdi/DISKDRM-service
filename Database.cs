@@ -53,13 +53,13 @@ public class Database
         }
     }
 
-    public void SaveToFile(string database_path)
+    public void SaveToFile()
     {
         byte[] stream = new byte[db.Count * ENTITY_SIZE];
         for (int i = 0; i < db.Count; i++)
         {
             Array.Copy(db[i], 0, stream, i * ENTITY_SIZE, ENTITY_SIZE);
         }
-        File.WriteAllBytes(database_path, stream);
+        File.WriteAllBytes(DATABASE_PATH, stream);
     }
 }

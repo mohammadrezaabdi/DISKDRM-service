@@ -2,6 +2,7 @@ namespace SSDDRM_service;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
+using System.ComponentModel;
 
 //TODO: use library class in https://github.com/dotnet/pinvoke
 //TODO: handle exceptions
@@ -56,6 +57,8 @@ public static class DiskEject
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr hObject);
     private const int MAX_PATH = 260;
+    public const string VOLUME_NOT_FOUND = "NOT EXISTS";
+    public const string VOLUME_IS_WIN_PRIMARY = "WIN VOL";
 
     const uint GENERIC_READ = 0x80000000;
     const uint GENERIC_WRITE = 0x40000000;
@@ -66,6 +69,23 @@ public static class DiskEject
     const uint IOCTL_STORAGE_EJECT_MEDIA = 0x2D4808;
     const uint IOCTL_STORAGE_MEDIA_REMOVAL = 0x002D4804;
     const uint IOCTL_MOUNTMGR_DELETE_POINTS = 0x6dc004;
+    const uint IOCTL_DISK_SET_DISK_ATTRIBUTES = 0x0007c0f4;
+    const uint IOCTL_DISK_UPDATE_PROPERTIES = 0x70140;
+    const ulong DISK_ATTRIBUTE_OFFLINE = 0x0000000000000001;
+
+
+    struct SET_DISK_ATTRIBUTES
+    {
+        public uint Version;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool Persist;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public byte[] Reserved1;
+        public ulong Attributes;
+        public ulong AttributesMask;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public uint[] Reserved2;
+    };
 
     public static bool Dismount(string driveName)
     {
@@ -73,13 +93,11 @@ public static class DiskEject
         bool result = false;
         if (!Directory.Exists(drivePath))
         {
-            Console.WriteLine($"Drive letter {drivePath} does not exist!");
-            return result;
+            throw new Win32Exception(Marshal.GetLastWin32Error(), VOLUME_NOT_FOUND);
         }
         if (drivePath.Equals(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))))
         {
-            Console.WriteLine($"Drive letter {drivePath} cannot be ejected!");
-            return result;
+            throw new Win32Exception(Marshal.GetLastWin32Error(), VOLUME_IS_WIN_PRIMARY);
         }
 
         string filename = @"\\.\" + driveName.Split(":")[0] + ":";
@@ -89,9 +107,11 @@ public static class DiskEject
             PreventRemovalOfVolume(handle, false);
             result = AutoEjectVolume(handle);
         }
+        if (!result)
+            result = OfflineDisk(handle);
         CloseVolume(handle);
         if (!result)
-            result = SafeRemoveVolume(drivePath);
+            result = RemoveVolume(drivePath);
         return result;
     }
 
@@ -136,11 +156,31 @@ public static class DiskEject
         return CloseHandle(handle);
     }
 
-    //TODO: offline device using IOCTL_DISK_SET_DISK_ATTRIBUTES ???
-    //              https://stackoverflow.com/questions/7531771/take-disks-online-offline
-    private static bool SafeRemoveVolume(string drivePath)
+    private static bool RemoveVolume(string drivePath)
     {
         StringBuilder volume = new StringBuilder(MAX_PATH);
         return GetVolumeNameForVolumeMountPoint(drivePath, volume, (uint)MAX_PATH) ? DeleteVolumeMountPoint(drivePath) : false;
+    }
+
+    private static bool OfflineDisk(IntPtr handle)
+    {
+        uint bytes_returned = 0;
+        bool b_offline = false;
+        var disk_attr = new SET_DISK_ATTRIBUTES();
+        disk_attr.Persist = true;
+        disk_attr.AttributesMask = DISK_ATTRIBUTE_OFFLINE;
+        disk_attr.Attributes = DISK_ATTRIBUTE_OFFLINE;
+        disk_attr.Reserved1 = new byte[3] { 0, 0, 0 };
+        disk_attr.Reserved2 = new uint[4] { 0, 0, 0, 0 };
+
+        int nPtrQryBytes = Marshal.SizeOf(disk_attr);
+        disk_attr.Version = (uint)nPtrQryBytes;
+
+        IntPtr ptrQuery = Marshal.AllocHGlobal(nPtrQryBytes);
+        Marshal.StructureToPtr(disk_attr, ptrQuery, false);
+
+        b_offline = DeviceIoControl(handle, IOCTL_DISK_SET_DISK_ATTRIBUTES, ptrQuery, (uint)nPtrQryBytes, IntPtr.Zero, 0, out bytes_returned, IntPtr.Zero);
+        // Invalidates the cached partition table and re-enumerates the device.
+        return DeviceIoControl(handle, IOCTL_DISK_UPDATE_PROPERTIES, IntPtr.Zero, 0, IntPtr.Zero, 0, out bytes_returned, IntPtr.Zero);
     }
 }
