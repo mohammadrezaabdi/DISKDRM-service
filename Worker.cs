@@ -7,7 +7,7 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private const int RUN_INTERVAL = 10000;
 
-    private Database ?db;
+    private Database? db;
 
     public Worker(ILogger<Worker> logger) => _logger = logger;
 
@@ -52,16 +52,21 @@ public class Worker : BackgroundService
         // db.SaveToFile();
 
         _logger.LogInformation("List Disks:");
-        List<string> dismountedVolumes = new List<string>();
         foreach (Disk disk in listDisk)
         {
             _logger.LogInformation(disk.ToString());
             if (!db.Contains(disk.hashValue) && disk.mountedVloumes.Any())
             {
-                _logger.LogInformation("        - Marked to Dismount.");
-                dismountedVolumes = dismountedVolumes.Concat(disk.Dismount()).ToList();
+                try
+                {
+                    disk.DisableDevice();
+                    _logger.LogInformation("- Disabled Successfully");
+                }
+                catch (ArgumentException)
+                {
+                    continue;
+                }
             }
         }
-        _logger.LogInformation("volumes [{mountVolume}] dismounted successfully.", new StringBuilder().AppendJoin(", ", dismountedVolumes));
     }
 }

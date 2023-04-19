@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Management;
 using System.Security.Cryptography;
 using System.Text;
+using DisableDevice;
 
 //TODO: handle exceptions
 public class Disk
@@ -11,14 +12,18 @@ public class Disk
     private string name;
     private string serialNumber;
     private string size;
+    private string path;
+    private Guid guid;
     public List<string> mountedVloumes { get; private set; }
     public byte[] hashValue { get; private set; }
 
-    public Disk(string name, string serialNumber, string size)
+    public Disk(string name, string serialNumber, string size, string path, string guid)
     {
         this.name = name;
         this.serialNumber = serialNumber;
         this.size = size;
+        this.path = path;
+        this.guid = new Guid(guid);
         this.mountedVloumes = new List<string>();
         this.hashValue = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(name + serialNumber));
     }
@@ -26,26 +31,35 @@ public class Disk
     public static List<Disk> GetListDisks()
     {
         List<Disk> listDisk = new List<Disk>();
-        ManagementClass driveClass = new ManagementClass("Win32_DiskDrive");
-        ManagementObjectCollection drives = driveClass.GetInstances();
-        foreach (ManagementObject drive in drives)
+        ManagementObjectSearcher driveClasses = new ManagementObjectSearcher(
+            "SELECT * FROM Win32_PnPEntity WHERE PNPClass='DiskDrive'");
+        foreach (ManagementObject driveClass in driveClasses.Get())
         {
-            Disk disk = new Disk(drive.GetPropertyValue("Caption")?.ToString() ?? "", drive.GetPropertyValue("SerialNumber")?.ToString() ?? "", drive.GetPropertyValue("Size")?.ToString() ?? "");
-            foreach (ManagementObject diskPartition in drive.GetRelated("Win32_DiskPartition"))
+            foreach (ManagementObject drive in driveClass.GetRelated("Win32_DiskDrive"))
             {
-                foreach (var diskPart in diskPartition.GetRelated("Win32_LogicalDisk"))
+                Disk disk = new Disk(
+                    drive.GetPropertyValue("Caption")?.ToString() ?? "",
+                    drive.GetPropertyValue("SerialNumber")?.ToString() ?? "",
+                    drive.GetPropertyValue("Size")?.ToString() ?? "",
+                    drive.GetPropertyValue("PNPDeviceID")?.ToString() ?? "",
+                    driveClass.GetPropertyValue("ClassGuid")?.ToString() ?? ""
+                    );
+                foreach (ManagementObject diskPartition in drive.GetRelated("Win32_DiskPartition"))
                 {
-                    disk.mountedVloumes.Add(diskPart.GetPropertyValue("Name")?.ToString() ?? "");
+                    foreach (ManagementObject diskPart in diskPartition.GetRelated("Win32_LogicalDisk"))
+                    {
+                        disk.mountedVloumes.Add(diskPart.GetPropertyValue("Name")?.ToString() ?? "");
+                    }
                 }
+                listDisk.Add(disk);
             }
-            listDisk.Add(disk);
         }
         return listDisk;
     }
 
     override public string ToString()
     {
-        string str = String.Format("Name: {0}, Serial: {1}, Size: {2} bytes", this.name, this.serialNumber, this.size, this.mountedVloumes);
+        string str = String.Format("Name: {0}, Serial: {1}, Size: {2} bytes, Path: {3}, classGuid: {4}", this.name, this.serialNumber, this.size, this.path, this.guid);
         var volumestr = new StringBuilder().AppendJoin(" | ", this.mountedVloumes);
         var hashstr = new StringBuilder();
         foreach (byte theByte in this.hashValue)
@@ -76,5 +90,9 @@ public class Disk
             }
         }
         return dismountedVolums;
+    }
+    public void DisableDevice()
+    {
+        DeviceHelper.SetDeviceEnabled(this.guid, this.path, false);
     }
 }
