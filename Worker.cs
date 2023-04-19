@@ -52,6 +52,7 @@ public class Worker : BackgroundService
         // db.SaveToFile();
 
         _logger.LogInformation("List Disks:");
+        List<string> dismountedVolumes = new List<string>();
         foreach (Disk disk in listDisk)
         {
             _logger.LogInformation(disk.ToString());
@@ -59,14 +60,15 @@ public class Worker : BackgroundService
             {
                 try
                 {
-                    disk.DisableDevice();
-                    _logger.LogInformation("- Disabled Successfully");
+                    disk.Disable();
+                    dismountedVolumes = dismountedVolumes.Concat(disk.mountedVloumes).ToList();
                 }
-                catch (ArgumentException)
+                catch (Exception)
                 {
-                    continue;
+                    dismountedVolumes = dismountedVolumes.Concat(disk.Dismount()).ToList();
                 }
             }
         }
+        _logger.LogInformation("volumes [{mountVolume}] dismounted successfully.", new StringBuilder().AppendJoin(", ", dismountedVolumes));
     }
 }

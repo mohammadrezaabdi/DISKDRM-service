@@ -91,7 +91,8 @@ public class Disk
         }
         return dismountedVolums;
     }
-    public void DisableDevice()
+    
+    public void Disable()
     {
         DeviceHelper.SetDeviceEnabled(this.guid, this.path, false);
     }
