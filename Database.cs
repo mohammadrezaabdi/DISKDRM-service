@@ -14,6 +14,10 @@ public class Database
 
     public Database()
     {
+        if (!File.Exists(DATABASE_PATH))
+        {
+            File.Create(DATABASE_PATH).Close();
+        }
         byte[] stream = File.ReadAllBytes(DATABASE_PATH);
         if (stream.Length % ENTITY_SIZE != 0)
         {
