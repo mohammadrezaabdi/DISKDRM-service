@@ -13,7 +13,7 @@ When the service executes, it uses all of following methods in order to remove a
 
 ## How to use
 simply go to the release folder and run the `install.bat` as administrator. it will register the service and start it. it will be accessible via `Windows Service Manager` utility.
-if you want to uninstall the service, just run `uninstall.bat`.
+if you want to stop and uninstall the service, just run `uninstall.bat`.
 
 ### update the database
 in order to modify the database file, you have to run the service executable file with `--add-disk` and `--remove-disk` flags, it will shows the list of disks to add/remove from database file. the default database path is *C:\ProgramData\DISKDRM\db.bin*

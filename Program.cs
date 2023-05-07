@@ -3,16 +3,22 @@ using Serilog;
 
 internal class Program
 {
-    protected static string UPDATE_DB_FLAG = "--add-disk";
+    protected static string ADD_DB_FLAG = "--add-disk";
+    protected static string REMOVE_DB_FLAG = "--remove-disk";
     protected static string QUIT_FLAG = "q";
     private static async Task Main(string[] args)
     {
-
         foreach (var arg in args)
         {
-            if (arg.ToLower().Equals(UPDATE_DB_FLAG))
+            if (arg.ToLower().Equals(ADD_DB_FLAG))
             {
-                UpdateDB();
+                UpdateDB(false);
+                System.Environment.Exit(0);
+            }
+            else
+            if (arg.ToLower().Equals(REMOVE_DB_FLAG))
+            {
+                UpdateDB(true);
                 System.Environment.Exit(0);
             }
         }
@@ -35,7 +41,7 @@ internal class Program
         await host.RunAsync();
     }
 
-    private static void UpdateDB()
+    private static void UpdateDB(bool isRemove)
     {
         List<Disk> listDisk = Disk.GetListDisks();
         Console.WriteLine("- List of Disks:");
@@ -59,7 +65,15 @@ internal class Program
                 {
                     throw new FormatException();
                 }
-                Database.GetInstance.Add(listDisk[index - 1].hashValue);
+                if (isRemove)
+                {
+                    Database.GetInstance.Remove(listDisk[index - 1].hashValue);
+                }
+                else
+                {
+                    Database.GetInstance.Add(listDisk[index - 1].hashValue);
+                }
+                Console.WriteLine("Success");
             }
             catch (FormatException)
             {

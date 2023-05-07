@@ -61,6 +61,18 @@ public sealed class Database
         return false;
     }
 
+    public int FindIndex(byte[] entity)
+    {
+        for (int i = 0; i < db.Count(); i++)
+        {
+            if (ByteArrayCompare(db[i], entity))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private bool ByteArrayCompare(byte[] b1, byte[] b2)
     {
         return b1.Length == b2.Length && memcmp(b1, b2, b1.Length) == 0;
@@ -71,6 +83,15 @@ public sealed class Database
         if (!Contains(entity))
         {
             db.Add(entity);
+        }
+    }
+
+    public void Remove(byte[] entity)
+    {
+        int index = FindIndex(entity);
+        if (index >= 0)
+        {
+            db.RemoveAt(index);
         }
     }
 
