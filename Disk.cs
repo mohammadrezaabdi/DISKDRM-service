@@ -1,4 +1,4 @@
-namespace SSDDRM_service;
+namespace DISKDRM_service;
 
 using System.ComponentModel;
 using System.Management;

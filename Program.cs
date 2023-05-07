@@ -1,4 +1,4 @@
-using SSDDRM_service;
+using DISKDRM_service;
 using Serilog;
 
 internal class Program
@@ -26,7 +26,7 @@ internal class Program
         var progData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
-            .WriteTo.File(Path.Combine(progData, "SSDDRM", "servicelog.txt"))
+            .WriteTo.File(Path.Combine(progData, "DISKDRM", "servicelog.txt"))
             .CreateLogger();
 
         IHost host = Host.CreateDefaultBuilder(args)

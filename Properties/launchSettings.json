@@ -1,6 +1,6 @@
 ﻿{
   "profiles": {
-    "SSDDRM_service": {
+    "DISKDRM_service": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

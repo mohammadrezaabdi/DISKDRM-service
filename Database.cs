@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-namespace SSDDRM_service;
+namespace DISKDRM_service;
 using System.IO;
 
 //TODO: handle exceptions
@@ -12,7 +12,7 @@ public sealed class Database
     private static readonly Database database = new Database();
     public List<byte[]> db { get; private set; }
     public const int ENTITY_SIZE = 32;
-    private string DATABASE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SSDDRM", "db.bin");
+    private string DATABASE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DISKDRM", "db.bin");
 
     static Database()
     {

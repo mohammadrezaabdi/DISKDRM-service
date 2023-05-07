@@ -1,4 +1,4 @@
-namespace SSDDRM_service;
+namespace DISKDRM_service;
 using static Disk;
 using System;
 using System.Text;

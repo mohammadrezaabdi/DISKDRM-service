@@ -1,4 +1,4 @@
-namespace SSDDRM_service;
+namespace DISKDRM_service;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;

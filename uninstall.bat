@@ -1,5 +1,5 @@
 @echo off
-SET NAME=SSDDRM
+SET NAME=DISKDRM
 
 :uninstall
 sc.exe query %NAME%

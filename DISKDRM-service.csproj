@@ -4,8 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-SSDDRM_service-2bc48a73-9678-4803-aa0e-e1cea16dc207</UserSecretsId>
-    <RootNamespace>SSDDRM_service</RootNamespace>
+    <UserSecretsId>dotnet-DISKDRM_service-2bc48a73-9678-4803-aa0e-e1cea16dc207</UserSecretsId>
+    <RootNamespace>DISKDRM_service</RootNamespace>
     <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
