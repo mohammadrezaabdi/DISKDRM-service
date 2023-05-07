@@ -12,7 +12,7 @@ There are 4 strategies that are utilized for Disconnecting a disk:
 When the service executes, it uses all of following methods in order to remove a disk. for example if we are editing a file in a disk, methods 1-3 may not work for disconnecting it from Windows, so the Service follows method 4 in order to force disconnecting it.
 
 ## How to use
-simply go to the release folder and run the `install.bat` as administrator. it will register the service and start it. it will be accessible via `Windows Service Manager` utility.
+simply run `install.bat` as administrator. it will register the service and start it. it will be accessible via `Windows Service Manager` utility.
 if you want to stop and uninstall the service, just run `uninstall.bat`.
 
 ### update the database
