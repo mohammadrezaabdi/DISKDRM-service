@@ -16,7 +16,14 @@ public class Worker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            DismountUnAuthorizedDisks(db);
+            try
+            {
+                DismountUnAuthorizedDisks(db);
+            }
+            catch (System.Exception e)
+            {
+                _logger.LogError("Error While Running Worker:\n", e.ToString());
+            }
             await Task.Delay(RUN_INTERVAL, stoppingToken);
         }
     }
@@ -38,6 +45,7 @@ public class Worker : BackgroundService
     public void DismountUnAuthorizedDisks(Database db)
     {
         List<Disk> listDisk = GetListDisks();
+
         //TODO: add C: primary disk to database
         foreach (Disk disk in listDisk)
         {
