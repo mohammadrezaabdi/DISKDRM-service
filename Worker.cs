@@ -38,6 +38,14 @@ public class Worker : BackgroundService
     public void DismountUnAuthorizedDisks(Database db)
     {
         List<Disk> listDisk = GetListDisks();
+        //TODO: add C: primary disk to database
+        foreach (Disk disk in listDisk)
+        {
+            if (disk.mountedVloumes.Contains(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.Substring(0, 2) ?? "C:"))
+            {
+                db.Add(disk.hashValue);
+            }
+        }
 
         // DEBUG: for filling database file
         // int i = 1;

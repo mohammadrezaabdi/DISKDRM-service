@@ -95,10 +95,6 @@ public static class DiskEject
         {
             throw new Win32Exception(Marshal.GetLastWin32Error(), VOLUME_NOT_FOUND);
         }
-        if (drivePath.Equals(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), VOLUME_IS_WIN_PRIMARY);
-        }
 
         string filename = @"\\.\" + driveName.Split(":")[0] + ":";
         IntPtr handle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
