@@ -50,18 +50,6 @@ public class Worker : BackgroundService
             }
         }
 
-        // DEBUG: for filling database file
-        // int i = 1;
-        // foreach (Disk disk in listDisk)
-        // {
-        //     _logger.LogInformation(disk.ToString());
-        //     if (i == 4) //skip disk 3
-        //         continue;
-        //     db.Add(disk.hashValue);
-        //     i++;
-        // }
-        // db.SaveToFile();
-
         _logger.LogInformation("List Disks:");
         List<string> dismountedVolumes = new List<string>();
         foreach (Disk disk in listDisk)
