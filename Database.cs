@@ -3,22 +3,32 @@ namespace SSDDRM_service;
 using System.IO;
 
 //TODO: handle exceptions
-public class Database
+public sealed class Database
 {
 
     [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
     static extern int memcmp(byte[] b1, byte[] b2, long count);
+
+    private static readonly Database database = new Database();
     public List<byte[]> db { get; private set; }
-    public static int ENTITY_SIZE = 32;
+    public const int ENTITY_SIZE = 32;
     private string DATABASE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SSDDRM", "db.bin");
 
-    public Database()
+    static Database()
     {
-        if (!File.Exists(DATABASE_PATH))
+
+    }
+    private Database()
+    {
+        // Store File Path Info
+        var fileinfo = new System.IO.FileInfo(DATABASE_PATH);
+        if (!fileinfo.Exists)
         {
-            File.Create(DATABASE_PATH).Close();
+            Directory.CreateDirectory(fileinfo.Directory.FullName);
+            File.Create(fileinfo.FullName).Close();
         }
-        byte[] stream = File.ReadAllBytes(DATABASE_PATH);
+
+        byte[] stream = File.ReadAllBytes(fileinfo.FullName);
         if (stream.Length % ENTITY_SIZE != 0)
         {
             throw new FileLoadException("Database file is corrupted!!!");
@@ -29,6 +39,13 @@ public class Database
             byte[] diskHash = new byte[ENTITY_SIZE];
             Array.Copy(stream, i, diskHash, 0, ENTITY_SIZE);
             db.Add(diskHash);
+        }
+    }
+    public static Database GetInstance
+    {
+        get
+        {
+            return database;
         }
     }
 

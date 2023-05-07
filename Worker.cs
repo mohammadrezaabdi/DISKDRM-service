@@ -6,9 +6,6 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private const int RUN_INTERVAL = 10000;
-
-    private Database? db;
-
     public Worker(ILogger<Worker> logger) => _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -18,7 +15,7 @@ public class Worker : BackgroundService
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             try
             {
-                DismountUnAuthorizedDisks(db);
+                DismountUnAuthorizedDisks();
             }
             catch (System.Exception e)
             {
@@ -31,8 +28,6 @@ public class Worker : BackgroundService
     public override Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("BackgroundService starting up ...");
-        _logger.LogInformation("Initialize database ...");
-        db = new Database();
         return base.StartAsync(cancellationToken);
     }
 
@@ -42,16 +37,16 @@ public class Worker : BackgroundService
         return base.StopAsync(cancellationToken);
     }
 
-    public void DismountUnAuthorizedDisks(Database db)
+    public void DismountUnAuthorizedDisks()
     {
         List<Disk> listDisk = GetListDisks();
 
-        //TODO: add C: primary disk to database
+        //add C: primary disk to database
         foreach (Disk disk in listDisk)
         {
             if (disk.mountedVloumes.Contains(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.Substring(0, 2) ?? "C:"))
             {
-                db.Add(disk.hashValue);
+                Database.GetInstance.Add(disk.hashValue);
             }
         }
 
@@ -72,7 +67,7 @@ public class Worker : BackgroundService
         foreach (Disk disk in listDisk)
         {
             _logger.LogInformation(disk.ToString());
-            if (!db.Contains(disk.hashValue) && disk.mountedVloumes.Any())
+            if (!Database.GetInstance.Contains(disk.hashValue) && disk.mountedVloumes.Any())
             {
                 try
                 {
