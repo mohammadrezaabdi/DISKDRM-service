@@ -34,3 +34,63 @@ if you want to install the service, you have to publish the program via `make pu
 	dotnet publish -o publish -c Release -r win-x64 -p:PublishSingleFile=True
 
 the binary executable service will be placed in */publish* folder.
+
+## Running a binary executable alongside the service
+if you want to execute a binary file while the service is running, consider a function [*LaunchCommandLineApp()*](https://stackoverflow.com/questions/9679375/how-can-i-run-an-exe-file-from-my-c-sharp-code) in `Worker.cs` Which invokes an EXE file with arguments. the function looks like this:
+
+```c#
+	using System.Diagnostics;
+
+	public class Worker{
+		...
+		void LaunchCommandLineApp(string filename, string[]? args = null)
+		{
+			ProcessStartInfo startInfo = new ProcessStartInfo();
+			startInfo.CreateNoWindow = false;
+			startInfo.UseShellExecute = false;
+			startInfo.FileName = filename;
+			startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+			if (args != null)
+			{
+				startInfo.Arguments = string.Join(" ", args);
+			}
+
+			try
+			{
+				using (Process exeProcess = Process.Start(startInfo))
+				{
+					exeProcess.WaitForExit();
+				}
+			}
+			catch
+			{
+				_logger.LogError("Error while launching external Application.");
+			}
+		}
+		...
+	}
+```
+
+You can launch any executable program via this function. for example if you have an app which sends http requests to check if the service is running in background, you can place the function in *ExecuteAsync()* just after *DisconnectUnAuthorizedDisks()* is being called. the code would be like this:
+
+```c#
+	public class Worker{
+		...
+		protected override async Task ExecuteAsync(...)
+		{
+			...
+				_logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+				try
+				{
+					DisconnectUnAuthorizedDisks();
+					LaunchCommandLineApp("path/to/app/myapp.exe", ["arg1", "arg2", ...])
+				}
+				catch (System.Exception e)
+				{
+					_logger.LogError("Error While Running Worker:\n", e.ToString());
+				}
+			...
+		}
+		...
+	}
+```

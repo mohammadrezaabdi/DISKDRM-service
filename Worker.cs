@@ -2,6 +2,7 @@ namespace DISKDRM_service;
 using static Disk;
 using System;
 using System.Text;
+
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
@@ -15,7 +16,7 @@ public class Worker : BackgroundService
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             try
             {
-                DismountUnAuthorizedDisks();
+                DisconnectUnAuthorizedDisks();
             }
             catch (System.Exception e)
             {
@@ -37,7 +38,7 @@ public class Worker : BackgroundService
         return base.StopAsync(cancellationToken);
     }
 
-    public void DismountUnAuthorizedDisks()
+    public void DisconnectUnAuthorizedDisks()
     {
         List<Disk> listDisk = GetListDisks();
 
