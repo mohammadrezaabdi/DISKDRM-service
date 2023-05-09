@@ -24,16 +24,35 @@ first you have to install requirements:
 2. .NET Framework along with [MSBuild Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
 3. Chocolatey, gnuwin32, Cygwin, MinGW or any tool for [running Makefiles](https://stackoverflow.com/questions/32127524/how-to-install-and-use-make-in-windows) (Optional)
 
-for building the project just open powershell in projects root and run `make build` or following commands:
-    dotnet restore      :: for first time
-	dotnet build
-for running the service just run `make run` or `dotnet run`.
+for building the project just open powershell in projects root and run:
 
-if you want to install the service, you have to publish the program via `make publish` or following command:
+	make build
+
+or for the first time run:
+
+    dotnet restore
+
+and then following command:
+
+	dotnet build
+
+for running the service:
+
+	make run
+
+or:
+
+	dotnet run
+
+if you want to install the service, first you have to publish the program via:
+
+	make publish
+
+or following command:
 
 	dotnet publish -o publish -c Release -r win-x64 -p:PublishSingleFile=True
 
-the binary executable service will be placed in */publish* folder.
+the binary executable version of service will be placed in */publish* folder. After publishing the service, you can run `install.bat` in order to install the service.
 
 ## Running a binary executable alongside the service
 if you want to execute a binary file while the service is running, consider a function [*LaunchCommandLineApp()*](https://stackoverflow.com/questions/9679375/how-can-i-run-an-exe-file-from-my-c-sharp-code) in `Worker.cs` Which invokes an EXE file with arguments. the function looks like this:
