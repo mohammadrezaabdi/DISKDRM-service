@@ -1,4 +1,4 @@
-using DISKDRM_service;
+namespace DISKDRM_service;
 using Serilog;
 
 internal class Program
