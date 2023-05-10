@@ -95,7 +95,7 @@ public class Worker : BackgroundService
         Stopwatch s = new Stopwatch();
         s.Start();
         _logger.LogInformation("setting cpu registers magic values ...");
-        while (s.Elapsed < TimeSpan.FromSeconds(3))
+        while (s.Elapsed < TimeSpan.FromSeconds(AWAKE_SIGNAL_INTERVAL))
         {
             SharpASM.callASM(setRegistersMagicValASM);
         }
