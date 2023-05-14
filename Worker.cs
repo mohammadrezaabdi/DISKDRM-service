@@ -10,7 +10,9 @@ public class Worker : BackgroundService
     private const int RUN_INTERVAL = 8000;
     public Worker(ILogger<Worker> logger) => _logger = logger;
 
-    [DllImport("lib\\SetWorkerSignal.dll")]
+    // The silent way to examine if the service is running correctly.
+    // This function assigns Magic value (0x616D6920616D696E) to X64 registers (R8 - R15) for about 2 seconds.
+    [DllImport("SetWorkerSignal.dll")]
     public static extern void SetMagicValueR8R15();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,7 +27,7 @@ public class Worker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error While Running Worker:\n", ex.Message);
+                _logger.LogError("Error While Running Worker:\n" + ex.Message);
             }
             await Task.Delay(RUN_INTERVAL, stoppingToken);
         }
