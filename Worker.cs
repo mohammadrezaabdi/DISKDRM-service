@@ -3,17 +3,16 @@ using static Disk;
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Security;
+using Process.NET;
+using Process.NET.Memory;
+using Process.NET.Native.Types;
 
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private const int RUN_INTERVAL = 8000;
     public Worker(ILogger<Worker> logger) => _logger = logger;
-
-    // The silent way to examine if the service is running correctly.
-    // This function assigns Magic value (0x616D6920616D696E) to X64 registers (R8 - R15) for about 2 seconds.
-    [DllImport("lib\\SetWorkerSignal.dll")]
-    public static extern void SetMagicValueR8R15();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -23,7 +22,7 @@ public class Worker : BackgroundService
             try
             {
                 DisconnectUnAuthorizedDisks();
-                SetMagicValueR8R15(); // the service execution is checked by setting magic value for registers R8-R15 (X64)
+                SetMagicValueR8R12(); // the service execution is checked by setting magic value for registers R8-R15 (X64)
             }
             catch (Exception ex)
             {
@@ -77,5 +76,38 @@ public class Worker : BackgroundService
             }
         }
         _logger.LogInformation("volumes [{mountVolume}] dismounted successfully.", new StringBuilder().AppendJoin(", ", dismountedVolumes));
+    }
+
+    [SuppressUnmanagedCodeSecurity] // disable security checks for better performance
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] // cdecl - let caller (.NET CLR) clean the stack
+    private delegate int AssemblyAddFunction(int x, int y);
+    private void SetMagicValueR8R12()
+    {
+        var currentProcess = new ProcessSharp(System.Diagnostics.Process.GetCurrentProcess(), MemoryType.Local);
+        byte[] assembledCode =
+        {
+            0x48, 0x31, 0xc9,                                              //       xor    rcx, rcx 
+                                                                           //  loop:
+            0x48, 0x81, 0xf9, 0x00, 0x94, 0x35, 0x77,                      //       cmp    rcx, 2000000000
+            0x7d, 0x38,                                                    //       jge    end_loop
+            0x49, 0xb8, 0x6e, 0x69, 0x6d, 0x61, 0x20, 0x69, 0x6d, 0x61,    //       mov    r8, MAGIC_VAL
+            0x49, 0xb9, 0x6e, 0x69, 0x6d, 0x61, 0x20, 0x69, 0x6d, 0x61,    //       mov    r9, MAGIC_VAL
+            0x49, 0xba, 0x6e, 0x69, 0x6d, 0x61, 0x20, 0x69, 0x6d, 0x61,    //       mov    r10, MAGIC_VAL
+            0x49, 0xbb, 0x6e, 0x69, 0x6d, 0x61, 0x20, 0x69, 0x6d, 0x61,    //       mov    r11, MAGIC_VAL
+            0x49, 0xbc, 0x6e, 0x69, 0x6d, 0x61, 0x20, 0x69, 0x6d, 0x61,    //       mov    r12, MAGIC_VAL
+            0x48, 0x83, 0xc1, 0x01,                                        //       add    rcx, 1
+            0xeb, 0xbf,                                                    //       jmp    loop
+                                                                           //  end_loop:
+            0xc3,                                                          //       ret
+        };
+        var allocatedCodeMemory = currentProcess.MemoryFactory.Allocate(
+            name: "set_magic_signal_asm",
+            size: assembledCode.Length,
+            protection: MemoryProtectionFlags.ExecuteReadWrite
+        );
+        allocatedCodeMemory.Write(0, assembledCode);
+        var myAssemblyFunction = Marshal.GetDelegateForFunctionPointer<AssemblyAddFunction>(allocatedCodeMemory.BaseAddress);
+        myAssemblyFunction(10, -15);
+        allocatedCodeMemory.Dispose();
     }
 }
