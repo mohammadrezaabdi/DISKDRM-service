@@ -66,8 +66,7 @@ public class Worker : BackgroundService
             {
                 try
                 {
-                    disk.Disable();
-                    dismountedVolumes = dismountedVolumes.Concat(disk.mountedVloumes).ToList();
+                    dismountedVolumes = dismountedVolumes.Concat(disk.Disable()).ToList();
                 }
                 catch (Exception)
                 {

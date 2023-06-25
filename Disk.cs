@@ -2,9 +2,9 @@ namespace DISKDRM_service;
 
 using System.ComponentModel;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using DisableDevice;
 
 //TODO: handle exceptions
 public class Disk
@@ -25,7 +25,7 @@ public class Disk
         this.path = path;
         this.guid = new Guid(guid);
         this.mountedVloumes = new List<string>();
-        this.hashValue = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(name + serialNumber));
+        this.hashValue = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(name + ' ' + serialNumber));
     }
 
     public static List<Disk> GetListDisks()
@@ -91,9 +91,11 @@ public class Disk
         }
         return dismountedVolums;
     }
-    
-    public void Disable()
+
+    public List<string> Disable()
     {
-        DeviceHelper.SetDeviceEnabled(this.guid, this.path, false);
+        if (DiskEject.SetDeviceDisabled(this.guid, this.path))
+            return this.mountedVloumes;
+        return new List<string>();
     }
 }
