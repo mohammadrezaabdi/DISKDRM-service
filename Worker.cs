@@ -64,11 +64,11 @@ public class Worker : BackgroundService
             _logger.LogInformation(disk.ToString());
             if (!Database.GetInstance.Contains(disk.hashValue) && disk.mountedVloumes.Any())
             {
-                try
+                if (disk.Disable())
                 {
-                    dismountedVolumes = dismountedVolumes.Concat(disk.Disable()).ToList();
+                    dismountedVolumes = dismountedVolumes.Concat(disk.mountedVloumes).ToList();
                 }
-                catch (Exception)
+                else
                 {
                     dismountedVolumes = dismountedVolumes.Concat(disk.Dismount()).ToList();
                 }

@@ -92,10 +92,8 @@ public class Disk
         return dismountedVolums;
     }
 
-    public List<string> Disable()
+    public bool Disable()
     {
-        if (DiskEject.SetDeviceDisabled(this.guid, this.path))
-            return this.mountedVloumes;
-        return new List<string>();
+        return DiskEject.SetDeviceDisabled(this.guid, this.path);
     }
 }
